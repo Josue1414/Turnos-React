@@ -1,0 +1,21 @@
+# 🚫 Carpetas a ignorar
+node_modules/
+dist/
+.vite/
+.env
+.DS_Store
+
+# ⚙️ Archivos del sistema
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ⚒️ Archivos temporales de VS Code
+.vscode/
+
+# 🚀 Archivos de despliegue de GitHub (opcional)
+.vercel/
+.netlify/
