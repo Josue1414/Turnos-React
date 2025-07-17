@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Offcanvas, Button, Form, Accordion, ListGroup } from "react-bootstrap";
 
-const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPorDia, selectedDay }) => {
+const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPorDia, diaSeleccionado, selectedDay, asignaciones }) => {
   const [nuevaCaja, setNuevaCaja] = useState("");
   const [nuevoTurno, setNuevoTurno] = useState("");
 
@@ -36,6 +36,37 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
     };
     setTurnosPorDia(actualizados);
   };
+
+  const exportarCSV = () => {
+  const rows = [["Día", "Turno", "Hora", "Caja", "Persona"]];
+
+  Object.entries(turnosPorDia).forEach(([dia, turnos]) => {
+    const asignacionesDia = asignaciones[dia] || {};
+
+    turnos.forEach((turno) => {
+      const turnoId = `T${turno.id}`;
+      const asignacionTurno = asignacionesDia[turnoId] || {};
+
+      Object.entries(asignacionTurno).forEach(([caja, persona]) => {
+        rows.push([dia, turnoId, turno.hora, caja, persona]);
+      });
+    });
+  });
+
+  // Convertir a CSV y agregar BOM para Excel
+  const csvContent =
+    "\uFEFF" + rows.map((e) => e.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "turnos.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
   return (
     <Offcanvas show={show} onHide={onClose} placement="end">
@@ -91,6 +122,13 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
               </ListGroup>
             </Accordion.Body>
           </Accordion.Item>
+          <Button
+            variant="outline-success"
+            className="mb-3"
+            onClick={() => exportarCSV(turnosPorDia, diaSeleccionado)}
+          >
+            Descargar CSV del día
+          </Button>
         </Accordion>
       </Offcanvas.Body>
     </Offcanvas>

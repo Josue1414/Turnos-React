@@ -24,13 +24,16 @@ function App() {
       { id: 4, hora: "4:20 PM - 5:30 PM" },
     ],
     sábado: [
-      { id: 1, hora: "9:00 AM - 10:00 AM" },
-      { id: 2, hora: "12:00 PM - 1:00 PM" },
-      { id: 3, hora: "3:00 PM - 4:00 PM" },
+      { id: 1, hora: "8:30 AM - 9:40 AM" },
+      { id: 2, hora: "11:45 AM - 12:50 PM" },
+      { id: 3, hora: "12:50 PM - 1:50 PM" },
+      { id: 4, hora: "4:10 PM - 5:20 PM" },
     ],
     domingo: [
-      { id: 1, hora: "10:00 AM - 11:00 AM" },
-      { id: 2, hora: "1:00 PM - 2:00 PM" },
+      { id: 1, hora: "8:30 AM - 9:40 AM" },
+      { id: 2, hora: "11:45 AM - 12:50 PM" },
+      { id: 3, hora: "12:50 PM - 1:50 PM" },
+      { id: 4, hora: "3:15 PM - 4:30 PM" },
     ],
   });
 
@@ -168,12 +171,25 @@ function App() {
       <AdminPanel
         show={showAdmin}
         onClose={() => setShowAdmin(false)}
-        cajas={cajas}
-        setCajas={setCajas}
+        cajas={cajasPorDia[selectedDay]}
+        setCajas={(nuevasCajas) => {
+          setCajasPorDia(prev => ({
+            ...prev,
+            [selectedDay]: nuevasCajas
+          }));
+        }}
+        horarios={turnosPorDia[selectedDay]}
+        setHorarios={(nuevosHorarios) => {
+          setTurnosPorDia(prev => ({
+            ...prev,
+            [selectedDay]: nuevosHorarios
+          }));
+        }}
+        diaSeleccionado={selectedDay}
         turnosPorDia={turnosPorDia}
-        setTurnosPorDia={setTurnosPorDia}
-        selectedDay={selectedDay}
+        asignaciones={asignaciones}
       />
+
 
       <div className="d-flex justify-content-center mb-4 flex-wrap">
         {dias.map((dia) => (
