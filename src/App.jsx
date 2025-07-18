@@ -179,17 +179,12 @@ function App() {
           }));
         }}
         horarios={turnosPorDia[selectedDay]}
-        setHorarios={(nuevosHorarios) => {
-          setTurnosPorDia(prev => ({
-            ...prev,
-            [selectedDay]: nuevosHorarios
-          }));
-        }}
-        diaSeleccionado={selectedDay}
+        selectedDay={selectedDay}
+        setTurnosPorDia={setTurnosPorDia}
         turnosPorDia={turnosPorDia}
         asignaciones={asignaciones}
+        setSelectedDay={setSelectedDay}
       />
-
 
       <div className="d-flex justify-content-center mb-4 flex-wrap">
         {dias.map((dia) => (
