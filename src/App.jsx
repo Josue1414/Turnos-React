@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import TurnosTable from "./components/TurnosTable";
 import AgregarPersonaForm from "./components/AgregarPersonaForm";
 import AdminPanel from "./components/AdminPanel";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import ParticipantesPanel from "./components/ParticipantesPanel";
 
 const dias = ["viernes", "sábado", "domingo"];
-const API_URL = "https://script.google.com/macros/s/AKfycbzIHRB1u69pJOLQPUlKzyGUUyVmNudW-g6lzE-iJmiA55m4nEyw1SrbfLJ57gQhXbvc/exec";
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbzIHRB1u69pJOLQPUlKzyGUUyVmNudW-g6lzE-iJmiA55m4nEyw1SrbfLJ57gQhXbvc/exec";
 
 function App() {
   const [selectedDay, setSelectedDay] = useState("viernes");
@@ -16,6 +18,14 @@ function App() {
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
   const [mostrarDisponibles, setMostrarDisponibles] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [mostrarPanel, setMostrarPanel] = useState(false);
+  const [participantes, setParticipantes] = useState([]);
+
+  const [personas, setPersonas] = useState(() => {
+    const data = localStorage.getItem("personas");
+    return data ? JSON.parse(data) : [];
+  });
+
   const [turnosPorDia, setTurnosPorDia] = useState({
     viernes: [
       { id: 1, hora: "8:30 AM - 9:40 AM" },
@@ -42,6 +52,10 @@ function App() {
     sábado: ["Caja 1", "Caja 2", "Caja 3"],
     domingo: ["Caja 1", "Caja 2", "Caja 3"],
   });
+
+  useEffect(() => {
+    localStorage.setItem("personas", JSON.stringify(personas));
+  }, [personas]);
 
   useEffect(() => {
     const guardado = localStorage.getItem("asignaciones");
@@ -94,7 +108,9 @@ function App() {
       return;
     }
 
-    const cajaDisponible = cajasPorDia[selectedDay].find((c) => !asignacionTurno[c]);
+    const cajaDisponible = cajasPorDia[selectedDay].find(
+      (c) => !asignacionTurno[c]
+    );
     if (cajaDisponible) {
       mostrarAlerta(
         `La ${caja} ya está ocupada. Se reasignó a ${cajaDisponible}.`,
@@ -134,7 +150,9 @@ function App() {
     turnosPorDia[selectedDay].forEach((turno) => {
       const turnoId = `T${turno.id}`;
       const asignacionTurno = asignacionesDia[turnoId] || {};
-      const cajasDisponibles = cajasPorDia[selectedDay].filter((caja) => !asignacionTurno[caja]);
+      const cajasDisponibles = cajasPorDia[selectedDay].filter(
+        (caja) => !asignacionTurno[caja]
+      );
       disponibles[turnoId] = {
         hora: turno.hora,
         cajas: cajasDisponibles,
@@ -151,141 +169,186 @@ function App() {
   const asignacionesDia = asignaciones[selectedDay] || {};
 
   const setCajas = (nuevasCajas) => {
-    setCajasPorDia(prev => ({
+    setCajasPorDia((prev) => ({
       ...prev,
-      [selectedDay]: nuevasCajas
+      [selectedDay]: nuevasCajas,
     }));
   };
 
-
   return (
-    <div className="container mt-4">
-      <h1 className="mb-4 text-center">Gestión de Turnos</h1>
-
-      <div className="d-flex justify-content-end mb-2">
-        <button className="btn btn-outline-dark" onClick={() => setShowAdmin(true)}>
-          ☰ Menú Admin
-        </button>
-      </div>
-
-      <AdminPanel
-        show={showAdmin}
-        onClose={() => setShowAdmin(false)}
-        cajas={cajasPorDia[selectedDay]}
-        setCajas={(nuevasCajas) => {
-          setCajasPorDia(prev => ({
-            ...prev,
-            [selectedDay]: nuevasCajas
-          }));
-        }}
-        horarios={turnosPorDia[selectedDay]}
-        selectedDay={selectedDay}
-        setTurnosPorDia={setTurnosPorDia}
+    <div className="d-flex">
+      <ParticipantesPanel
+        show={mostrarPanel}
+        onClose={() => setMostrarPanel(false)}
+        personas={personas}
+        setPersonas={setPersonas}
         turnosPorDia={turnosPorDia}
-        asignaciones={asignaciones}
-        setSelectedDay={setSelectedDay}
       />
 
-      <div className="d-flex justify-content-center mb-4 flex-wrap">
-        {dias.map((dia) => (
+      <div className="container mt-4 flex-grow-1">
+        <div className="d-flex justify-content-between mb-2">
           <button
-            key={dia}
-            className={`btn mx-1 mb-2 ${selectedDay === dia ? "btn-primary" : "btn-outline-primary"}`}
-            onClick={() => {
-              setSelectedDay(dia);
-              setModoEdicion(null);
-            }}
+            className="btn btn-outline-primary"
+            onClick={() => setMostrarPanel(true)}
           >
-            {dia.charAt(0).toUpperCase() + dia.slice(1)}
+            👤 Participantes
           </button>
-        ))}
-      </div>
 
-      {alerta && (
-        <div className={`alert alert-${alerta.tipo} position-fixed top-0 start-50 translate-middle-x mt-3 z-3`} style={{ minWidth: "300px", maxWidth: "80%" }}>
-          {alerta.mensaje}
+          <button
+            className="btn btn-outline-dark"
+            onClick={() => setShowAdmin(true)}
+          >
+            ☰ Menú Admin
+          </button>
         </div>
-      )}
 
-      <div className="d-flex justify-content-center mb-3">
-        <button
-          className="btn btn-outline-secondary"
-          onClick={() => setMostrarDisponibles(!mostrarDisponibles)}
-        >
-          {mostrarDisponibles ? "Ocultar lugares disponibles" : "Ver lugares disponibles"}{" "}
-          <span>{mostrarDisponibles ? "▲" : "▼"}</span>
-        </button>
-      </div>
+        <AdminPanel
+          show={showAdmin}
+          onClose={() => setShowAdmin(false)}
+          cajas={cajasPorDia[selectedDay]}
+          setCajas={(nuevasCajas) => {
+            setCajasPorDia((prev) => ({
+              ...prev,
+              [selectedDay]: nuevasCajas,
+            }));
+          }}
+          horarios={turnosPorDia[selectedDay]}
+          selectedDay={selectedDay}
+          setTurnosPorDia={setTurnosPorDia}
+          turnosPorDia={turnosPorDia}
+          asignaciones={asignaciones}
+          setSelectedDay={setSelectedDay}
+        />
 
-      {mostrarDisponibles && (
-        <div className="mb-4">
-          <div className="card card-body">
-            <h5 className="mb-3 text-center">Lugares disponibles - {selectedDay}</h5>
-            <div className="table-responsive">
-              <table className="table table-bordered text-center">
-                <thead className="table-light">
-                  <tr>
-                    <th>Turno</th>
-                    <th>Horario</th>
-                    <th>Cajas disponibles</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(obtenerDisponibles()).map(([turnoId, info]) => (
-                    <tr key={turnoId}>
-                      <td>{turnoId}</td>
-                      <td>{info.hora}</td>
-                      <td>
-                        {info.cajas.length > 0 ? (
-                          info.cajas.join(", ")
-                        ) : (
-                          <span className="text-danger">Sin espacios</span>
-                        )}
-                      </td>
+        <div className="d-flex justify-content-center mb-4 flex-wrap">
+          {dias.map((dia) => (
+            <button
+              key={dia}
+              className={`btn mx-1 mb-2 ${
+                selectedDay === dia ? "btn-primary" : "btn-outline-primary"
+              }`}
+              onClick={() => {
+                setSelectedDay(dia);
+                setModoEdicion(null);
+              }}
+            >
+              {dia.charAt(0).toUpperCase() + dia.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {alerta && (
+          <div
+            className={`alert alert-${alerta.tipo} position-fixed top-0 start-50 translate-middle-x mt-3 z-3`}
+            style={{ minWidth: "300px", maxWidth: "80%" }}
+          >
+            {alerta.mensaje}
+          </div>
+        )}
+
+        <div className="d-flex justify-content-center mb-3">
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => setMostrarDisponibles(!mostrarDisponibles)}
+          >
+            {mostrarDisponibles
+              ? "Ocultar lugares disponibles"
+              : "Ver lugares disponibles"}{" "}
+            <span>{mostrarDisponibles ? "▲" : "▼"}</span>
+          </button>
+        </div>
+
+        {mostrarDisponibles && (
+          <div className="mb-4">
+            <div className="card card-body">
+              <h5 className="mb-3 text-center">
+                Lugares disponibles - {selectedDay}
+              </h5>
+              <div className="table-responsive">
+                <table className="table table-bordered text-center">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Turno</th>
+                      <th>Horario</th>
+                      <th>Cajas disponibles</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <AgregarPersonaForm
-        cajas={cajas}
-        turnos={turnos}
-        onAgregar={agregarAsignacion}
-        modoEdicion={modoEdicion}
-        setModoEdicion={setModoEdicion}
-      />
-
-      <TurnosTable
-        asignaciones={asignacionesDia}
-        turnos={turnos}
-        cajas={cajas}
-        onEditar={editarAsignacion}
-        onEliminar={eliminarAsignacion}
-      />
-
-      {confirmarEliminar && (
-        <div className="modal fade show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Confirmar eliminación</h5>
-                <button type="button" className="btn-close" onClick={() => setConfirmarEliminar(null)}></button>
-              </div>
-              <div className="modal-body">
-                ¿Estás seguro de que deseas eliminar esta asignación?
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setConfirmarEliminar(null)}>Cancelar</button>
-                <button className="btn btn-danger" onClick={confirmarEliminarAsignacion}>Eliminar</button>
+                  </thead>
+                  <tbody>
+                    {Object.entries(obtenerDisponibles()).map(
+                      ([turnoId, info]) => (
+                        <tr key={turnoId}>
+                          <td>{turnoId}</td>
+                          <td>{info.hora}</td>
+                          <td>
+                            {info.cajas.length > 0 ? (
+                              info.cajas.join(", ")
+                            ) : (
+                              <span className="text-danger">Sin espacios</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        <AgregarPersonaForm
+          cajas={cajas}
+          turnos={turnos}
+          onAgregar={agregarAsignacion}
+          modoEdicion={modoEdicion}
+          setModoEdicion={setModoEdicion}
+          personas={personas}
+          setPersonas={setPersonas}
+          setTurnosPorDia={setTurnosPorDia}
+        />
+
+        <TurnosTable
+          asignaciones={asignacionesDia}
+          turnos={turnos}
+          cajas={cajas}
+          onEditar={editarAsignacion}
+          onEliminar={eliminarAsignacion}
+        />
+
+        {confirmarEliminar && (
+          <div className="modal fade show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Confirmar eliminación</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setConfirmarEliminar(null)}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  ¿Estás seguro de que deseas eliminar esta asignación?
+                </div>
+                <div className="modal-footer">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setConfirmarEliminar(null)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={confirmarEliminarAsignacion}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
