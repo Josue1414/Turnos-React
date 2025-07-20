@@ -13,15 +13,74 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
     setTimeout(() => setAlerta(null), 3000);
   };
 
-  const agregarCaja = () => {
-    if (nuevaCaja.trim() && !cajas.includes(nuevaCaja)) {
+  // MODIFICACIÓN: Nueva función para manejar el envío del formulario de cajas
+  const manejarAgregarCaja = (e) => {
+    e.preventDefault(); // <--- ESTO ES CLAVE: Previene la recarga de la página
+
+    if (nuevaCaja.trim() && !cajas.includes(nuevaCaja.trim())) { // Asegúrate de usar .trim() al verificar existencia también
       setCajas([...cajas, nuevaCaja.trim()]);
       setNuevaCaja("");
+      // Opcional: mostrar una alerta de éxito
+      // mostrarAlerta("Caja agregada exitosamente.", "success");
+    } else if (cajas.includes(nuevaCaja.trim())) {
+      mostrarAlerta("¡Esa caja ya existe!", "danger");
+    } else {
+      mostrarAlerta("El nombre de la caja no puede estar vacío.", "warning");
     }
   };
 
   const eliminarCaja = (nombre) => {
+    // Implementa lógica para evitar eliminar si tiene asignaciones
+    // Por ahora, solo elimina si no está asignada.
+    // Si necesitas verificar asignaciones antes de eliminar una caja,
+    // tendrías que pasar 'asignaciones' a esta función o buscar aquí.
+    const isCajaAsignada = Object.values(asignaciones[selectedDay] || {}).some(turnoObj =>
+        Object.keys(turnoObj).includes(nombre)
+    );
+
+    if (isCajaAsignada) {
+        mostrarAlerta(`No se puede eliminar "${nombre}" porque tiene asignaciones activas.`);
+        return;
+    }
+
     setCajas(cajas.filter((c) => c !== nombre));
+  };
+
+
+  // Función ya existente para manejar el envío del formulario de horarios (al presionar Enter)
+  const manejarAgregarHorario = (e) => {
+    e.preventDefault(); // Previene la recarga de la página
+
+    const hora = nuevoTurno.trim();
+    const turnosActuales = turnosPorDia[selectedDay] || [];
+
+    if (!hora) {
+      mostrarAlerta("⚠️ El horario no puede estar vacío.");
+      return;
+    }
+
+    const yaExiste = turnosActuales.some(
+      (t) => t.hora.toLowerCase() === hora.toLowerCase()
+    );
+
+    if (yaExiste) {
+      mostrarAlerta("🚫 Ese horario ya existe en este día.");
+      return;
+    }
+
+    const nuevoId = turnosActuales.length
+      ? Math.max(...turnosActuales.map((t) => t.id)) + 1
+      : 1;
+
+    const nuevoTurnoObj = { id: nuevoId, hora };
+
+    const actualizados = {
+      ...turnosPorDia,
+      [selectedDay]: [...turnosActuales, nuevoTurnoObj],
+    };
+
+    setTurnosPorDia(actualizados);
+    setNuevoTurno("");
   };
 
   const exportarCSV = () => {
@@ -75,14 +134,16 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
           <Accordion.Item eventKey="0">
             <Accordion.Header>Cajas</Accordion.Header>
             <Accordion.Body>
-              <Form className="d-flex mb-2">
+              {/* MODIFICACIÓN: Asignamos el evento onSubmit al Form de Cajas */}
+              <Form className="d-flex mb-2" onSubmit={manejarAgregarCaja}>
                 <Form.Control
                   type="text"
                   placeholder="Nueva caja"
                   value={nuevaCaja}
                   onChange={(e) => setNuevaCaja(e.target.value)}
+                  // Ya no necesitas onKeyPress aquí
                 />
-                <Button variant="primary ms-2" onClick={agregarCaja}>
+                <Button variant="primary ms-2" type="submit"> {/* AÑADE type="submit" */}
                   Agregar
                 </Button>
               </Form>
@@ -103,7 +164,8 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
           <Accordion.Item eventKey="1">
             <Accordion.Header>Horarios - {selectedDay}</Accordion.Header>
             <Accordion.Body>
-              <Form className="d-flex mb-3">
+              {/* Aquí ya estaba la modificación del `onSubmit` */}
+              <Form className="d-flex mb-3" onSubmit={manejarAgregarHorario}>
                 <Form.Control
                   type="text"
                   placeholder="Nuevo horario (ej. 10:00 AM - 11:00 AM)"
@@ -112,38 +174,7 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
                 />
                 <Button
                   variant="primary ms-2"
-                  onClick={() => {
-                    const hora = nuevoTurno.trim();
-                    const turnosActuales = turnosPorDia[selectedDay] || [];
-
-                    if (!hora) {
-                      mostrarAlerta("⚠️ El horario no puede estar vacío.");
-                      return;
-                    }
-
-                    const yaExiste = turnosActuales.some(
-                      (t) => t.hora.toLowerCase() === hora.toLowerCase()
-                    );
-
-                    if (yaExiste) {
-                      mostrarAlerta("🚫 Ese horario ya existe en este día.");
-                      return;
-                    }
-
-                    const nuevoId = turnosActuales.length
-                      ? Math.max(...turnosActuales.map((t) => t.id)) + 1
-                      : 1;
-
-                    const nuevoTurnoObj = { id: nuevoId, hora };
-
-                    const actualizados = {
-                      ...turnosPorDia,
-                      [selectedDay]: [...turnosActuales, nuevoTurnoObj],
-                    };
-
-                    setTurnosPorDia(actualizados);
-                    setNuevoTurno("");
-                  }}
+                  type="submit"
                 >
                   Agregar
                 </Button>

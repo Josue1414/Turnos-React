@@ -189,6 +189,7 @@ function App() {
 
 
       <div className="container mt-4 flex-grow-1">
+        <h1 className="mb-4 text-center">Gestión de Turnos</h1>
         <div className="d-flex justify-content-between mb-2">
           <button
             className="btn btn-outline-primary"

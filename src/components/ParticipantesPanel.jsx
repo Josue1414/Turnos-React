@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { Offcanvas, Button, Form, ListGroup, InputGroup, Alert, Modal, Collapse } from "react-bootstrap"; // Importa Collapse
+import { Offcanvas, Button, Form, ListGroup, InputGroup, Alert, Modal, Collapse } from "react-bootstrap";
 
 const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones, setAsignaciones, turnosPorDia }) => {
   const [nuevaPersona, setNuevaPersona] = useState("");
@@ -8,33 +8,38 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [personaAEliminarConfirm, setPersonaAEliminarConfirm] = useState(null);
   const [editingPersona, setEditingPersona] = useState(null);
-  const [editedName, setEditedName] = useState("");
-  const [openCollapse, setOpenCollapse] = useState(null); // Nuevo estado para controlar qué participante está expandido
+  const [editedName, setEditedName] = "";
+  const [openCollapse, setOpenCollapse] = useState(null);
 
-  const personaTieneAsignaciones = useCallback((persona) => {
+  // MODIFICACIÓN 1: Función para contar las asignaciones de una persona
+  const contarAsignaciones = useCallback((personaNombre) => {
+    let count = 0;
     for (const dia in asignaciones) {
       for (const turnoId in asignaciones[dia]) {
         for (const caja in asignaciones[dia][turnoId]) {
-          if (asignaciones[dia][turnoId][caja] === persona) {
-            return true;
+          if (asignaciones[dia][turnoId][caja] === personaNombre) {
+            count++;
           }
         }
       }
     }
-    return false;
+    return count;
   }, [asignaciones]);
 
-  // Nueva función para obtener las asignaciones de una persona específica
+  const personaTieneAsignaciones = useCallback((persona) => {
+    // Ahora podemos usar contarAsignaciones para determinar si tiene asignaciones
+    return contarAsignaciones(persona) > 0;
+  }, [contarAsignaciones]); // Dependencia de useCallback
+
   const obtenerAsignacionesDePersona = useCallback((personaNombre) => {
     const asignacionesEncontradas = [];
     for (const dia in asignaciones) {
       for (const turnoId in asignaciones[dia]) {
         for (const caja in asignaciones[dia][turnoId]) {
           if (asignaciones[dia][turnoId][caja] === personaNombre) {
-            // Encuentra la hora del turno usando turnosPorDia
             const horaTurno = turnosPorDia[dia]?.find(t => `T${t.id}` === turnoId)?.hora;
             asignacionesEncontradas.push({
-              dia: dia.charAt(0).toUpperCase() + dia.slice(1), // Capitalizar día
+              dia: dia.charAt(0).toUpperCase() + dia.slice(1),
               turno: turnoId,
               hora: horaTurno || 'Desconocido',
               caja: caja,
@@ -44,7 +49,7 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
       }
     }
     return asignacionesEncontradas;
-  }, [asignaciones, turnosPorDia]); // Dependencias de useCallback
+  }, [asignaciones, turnosPorDia]);
 
   const mostrarAlerta = (mensaje, variante = "warning") => {
     setAlerta({ mensaje, variante });
@@ -197,13 +202,13 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
           </InputGroup>
 
           <InputGroup className="mb-3">
-            <InputGroup.Text>🔍</InputGroup.Text>
             <Form.Control
               type="text"
               placeholder="Buscar participante..."
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
             />
+            <InputGroup.Text>🔍</InputGroup.Text>
           </InputGroup>
         </Form>
 
@@ -212,8 +217,7 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
             participantesConEstado.map((participante, index) => (
               <React.Fragment key={index}>
                 <ListGroup.Item
-                  // ELIMINA: action
-                  as="div" 
+                  as="div"
                   role="button"
                   tabIndex="0"
                   onClick={() => setOpenCollapse(openCollapse === participante.nombre ? null : participante.nombre)}
@@ -222,7 +226,7 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
                   aria-expanded={openCollapse === participante.nombre}
                 >
                   {editingPersona === participante.nombre ? (
-                    <InputGroup className="flex-grow-1 me-2"> {/* flex-grow-1 para que ocupe espacio */}
+                    <InputGroup className="flex-grow-1 me-2">
                       <Form.Control
                         type="text"
                         value={editedName}
@@ -243,6 +247,9 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
                     </InputGroup>
                   ) : (
                     <>
+                      <span className="ms-2">
+                        {openCollapse === participante.nombre ? "▲" : "▼"}
+                      </span>
                       {participante.nombre}
                       <div>
                         <Button
@@ -251,27 +258,24 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
                           className="me-2"
                           disabled
                         >
-                          {participante.asignado ? "Asignado" : "Libre"}
+                          {/* MODIFICACIÓN 2: Mostrar el conteo de asignaciones */}
+                          {participante.asignado ? `Asignado [${contarAsignaciones(participante.nombre)}]` : "Libre"}
                         </Button>
                         <Button
                           variant="outline-info"
                           size="sm"
                           className="me-2"
-                          onClick={(e) => { e.stopPropagation(); iniciarEdicion(participante.nombre); }} // Evitar que el clic edite y colapse
+                          onClick={(e) => { e.stopPropagation(); iniciarEdicion(participante.nombre); }}
                         >
                           ✏️
                         </Button>
                         <Button
                           variant="outline-danger"
                           size="sm"
-                          onClick={(e) => { e.stopPropagation(); iniciarEliminacion(participante.nombre); }} // Evitar que el clic elimine y colapse
+                          onClick={(e) => { e.stopPropagation(); iniciarEliminacion(participante.nombre); }}
                         >
                           🗑️
                         </Button>
-                        {/* Indicador de flecha para colapsable */}
-                        <span className="ms-2">
-                          {openCollapse === participante.nombre ? "▲" : "▼"}
-                        </span>
                       </div>
                     </>
                   )}
@@ -283,13 +287,13 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
                     {obtenerAsignacionesDePersona(participante.nombre).length > 0 ? (
                       <ListGroup variant="flush">
                         {obtenerAsignacionesDePersona(participante.nombre).map((asig, idx) => (
-                          <ListGroup.Item key={idx} className="py-1 px-0 border-0"> {/* Eliminamos d-flex flex-wrap de aquí */}
+                          <ListGroup.Item key={idx} className="py-1 px-0 border-0">
                             <p className="mb-1">
-                                <span className="me-2">🗓️</span><strong className="me-1">Día:</strong> <span className="badge bg-primary">{asig.dia}</span>
-                                <span className="me-2">📦</span><strong className="me-1">Caja:</strong> <span className="badge bg-success">{asig.caja}</span>
+                              <span className="me-2">🗓️</span><strong className="me-1">Día:</strong> <span className="badge bg-primary">{asig.dia}</span>
+                              <span className="me-2">📦</span><strong className="me-1">Caja:</strong> <span className="badge bg-success">{asig.caja}</span>
                             </p>
                             <p className="mb-1">
-                                <span className="me-2">⏰</span><strong className="me-1">Turno:</strong> <span className="badge bg-info text-dark">{asig.turno} ({asig.hora})</span>
+                              <span className="me-2">⏰</span><strong className="me-1">Turno:</strong> <span className="badge bg-info text-dark">{asig.turno} ({asig.hora})</span>
                             </p>
                           </ListGroup.Item>
                         ))}
