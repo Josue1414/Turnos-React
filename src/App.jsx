@@ -184,6 +184,7 @@ function App() {
         setPersonas={setPersonas}
         asignaciones={asignaciones}
         setAsignaciones={setAsignaciones}
+        turnosPorDia={turnosPorDia}
       />
 
 
@@ -355,3 +356,4 @@ function App() {
 }
 
 export default App;
+///// --- IGNORE ---
