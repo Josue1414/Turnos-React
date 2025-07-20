@@ -27,7 +27,7 @@ const TurnosTable = ({ asignaciones, turnos, cajas, onEditar, onEliminar }) => {
                       <div className="d-flex justify-content-between align-items-center">
                         <span>{fila[caja]}</span>
                         <div className="btn-group btn-group-sm ms-2">
-                          <button
+                          {/*<button
                             className="btn btn-outline-primary"
                             onClick={() =>
                               onEditar({
@@ -38,14 +38,14 @@ const TurnosTable = ({ asignaciones, turnos, cajas, onEditar, onEliminar }) => {
                             }
                           >
                             Editar
-                          </button>
+                          </button>*/}
                           <button
                             className="btn btn-outline-danger"
                             onClick={() =>
                               onEliminar({ turno: turnoId, caja })
                             }
                           >
-                            Eliminar
+                           🗑️
                           </button>
                         </div>
                       </div>

@@ -182,8 +182,10 @@ function App() {
         onClose={() => setMostrarPanel(false)}
         personas={personas}
         setPersonas={setPersonas}
-        turnosPorDia={turnosPorDia}
+        asignaciones={asignaciones}
+        setAsignaciones={setAsignaciones}
       />
+
 
       <div className="container mt-4 flex-grow-1">
         <div className="d-flex justify-content-between mb-2">
@@ -224,9 +226,8 @@ function App() {
           {dias.map((dia) => (
             <button
               key={dia}
-              className={`btn mx-1 mb-2 ${
-                selectedDay === dia ? "btn-primary" : "btn-outline-primary"
-              }`}
+              className={`btn mx-1 mb-2 ${selectedDay === dia ? "btn-primary" : "btn-outline-primary"
+                }`}
               onClick={() => {
                 setSelectedDay(dia);
                 setModoEdicion(null);

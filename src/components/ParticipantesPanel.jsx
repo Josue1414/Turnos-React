@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 import { Offcanvas, Form, ListGroup, Button, Badge } from "react-bootstrap";
 
-const ParticipantesPanel = ({ show, onClose, personas, setPersonas, turnosPorDia, setTurnosPorDia }) => {
+const ParticipantesPanel = ({
+  show,
+  onClose,
+  personas,
+  setPersonas,
+  turnosPorDia,
+  setTurnosPorDia,
+  asignaciones,
+  setAsignaciones,
+}) => {
   const [busqueda, setBusqueda] = useState("");
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [modoEdicion, setModoEdicion] = useState(null);
@@ -45,10 +54,10 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, turnosPorDia
     setModoEdicion(null);
     setNombreEditado("");
 
-    // 🔁 ACTUALIZAR también en turnosPorDia
-    const copiaTurnos = JSON.parse(JSON.stringify(turnosPorDia));
-    for (let dia in copiaTurnos) {
-      const turnos = copiaTurnos[dia];
+    // 🔁 ACTUALIZAR también en las asignaciones (no en turnosPorDia)
+    const copiaAsignaciones = JSON.parse(JSON.stringify(asignaciones));
+    for (let dia in copiaAsignaciones) {
+      const turnos = copiaAsignaciones[dia];
       for (let horario in turnos) {
         for (let caja in turnos[horario]) {
           if (turnos[horario][caja] === nombreAnterior) {
@@ -57,7 +66,7 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, turnosPorDia
         }
       }
     }
-    setTurnosPorDia(copiaTurnos);
+    setAsignaciones(copiaAsignaciones);
   };
 
   const eliminarParticipante = (index) => {
@@ -71,9 +80,9 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, turnosPorDia
     setPersonas(actualizada);
 
     // ❌ ELIMINAR de las asignaciones también
-    const copiaTurnos = JSON.parse(JSON.stringify(turnosPorDia));
-    for (let dia in copiaTurnos) {
-      const turnos = copiaTurnos[dia];
+    const copiaAsignaciones = JSON.parse(JSON.stringify(asignaciones));
+    for (let dia in copiaAsignaciones) {
+      const turnos = copiaAsignaciones[dia];
       for (let horario in turnos) {
         for (let caja in turnos[horario]) {
           if (turnos[horario][caja] === nombre) {
@@ -82,7 +91,7 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, turnosPorDia
         }
       }
     }
-    setTurnosPorDia(copiaTurnos);
+    setAsignaciones(copiaAsignaciones);
   };
 
   const filtrarParticipantes = personas.filter((p) =>
