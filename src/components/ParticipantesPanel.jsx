@@ -8,7 +8,7 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [personaAEliminarConfirm, setPersonaAEliminarConfirm] = useState(null);
   const [editingPersona, setEditingPersona] = useState(null);
-  const [editedName, setEditedName] = "";
+  const [editedName, setEditedName] = useState("")
   const [openCollapse, setOpenCollapse] = useState(null);
 
   // MODIFICACIÓN 1: Función para contar las asignaciones de una persona
