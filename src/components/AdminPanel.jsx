@@ -4,7 +4,8 @@ import * as XLSX from 'xlsx';
 
 const dias = ["viernes", "sábado", "domingo"];
 
-const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPorDia, selectedDay, setSelectedDay, asignaciones }) => {
+const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPorDia, selectedDay, setSelectedDay, asignaciones, mapImageUrl,
+  setMapImageUrl, }) => {
   const [nuevaCaja, setNuevaCaja] = useState("");
   const [nuevoTurno, setNuevoTurno] = useState("");
   const [alerta, setAlerta] = useState(null);
@@ -14,7 +15,7 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
     setTimeout(() => setAlerta(null), 3000);
   };
 
-  // MODIFICACIÓN: Nueva función para manejar el envío del formulario de cajas
+  // función para manejar el envío del formulario de cajas
   const manejarAgregarCaja = (e) => {
     e.preventDefault(); // <--- ESTO ES CLAVE: Previene la recarga de la página
 
@@ -135,6 +136,31 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
     XLSX.writeFile(wb, "turnos.xlsx");
   };
 
+  const handleMapImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // Limite de 2MB
+        mostrarAlerta("La imagen es demasiado grande. Por favor, sube una imagen de menos de 2MB.", "danger");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMapImageUrl(reader.result); // Guarda la URL base64 en el estado
+        mostrarAlerta("✨ Imagen del croquis cargada con éxito.", "success");
+      };
+      reader.onerror = () => {
+        mostrarAlerta("❌ Error al leer la imagen. Inténtalo de nuevo.", "danger");
+      };
+      reader.readAsDataURL(file); // Convierte la imagen a Base64
+    }
+  };
+
+  const handleRemoveMapImage = () => {
+    setMapImageUrl(null);
+    mostrarAlerta("🗑️ Croquis eliminado.", "info");
+  };
+
   return (
     <Offcanvas show={show} onHide={onClose} placement="end">
       <Offcanvas.Header closeButton>
@@ -161,16 +187,14 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
           <Accordion.Item eventKey="0">
             <Accordion.Header>Cajas</Accordion.Header>
             <Accordion.Body>
-              {/* MODIFICACIÓN: Asignamos el evento onSubmit al Form de Cajas */}
               <Form className="d-flex mb-2" onSubmit={manejarAgregarCaja}>
                 <Form.Control
                   type="text"
                   placeholder="Nueva caja"
                   value={nuevaCaja}
                   onChange={(e) => setNuevaCaja(e.target.value)}
-                // Ya no necesitas onKeyPress aquí
                 />
-                <Button variant="primary ms-2" type="submit"> {/* AÑADE type="submit" */}
+                <Button variant="primary ms-2" type="submit">
                   Agregar
                 </Button>
               </Form>
@@ -191,7 +215,6 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
           <Accordion.Item eventKey="1">
             <Accordion.Header>Horarios - {selectedDay}</Accordion.Header>
             <Accordion.Body>
-              {/* Aquí ya estaba la modificación del `onSubmit` */}
               <Form className="d-flex mb-3" onSubmit={manejarAgregarHorario}>
                 <Form.Control
                   type="text"
@@ -267,10 +290,35 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
             </Accordion.Body>
           </Accordion.Item>
 
+          <Accordion.Item eventKey="2">
+            <Accordion.Header>Croquis de Cajas</Accordion.Header>
+            <Accordion.Body>
+              <Form.Group controlId="formFile" className="mb-3">
+                <Form.Label>Subir o cambiar imagen del croquis</Form.Label>
+                <Form.Control
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMapImageUpload}
+                />
+                <Form.Text className="text-muted">
+                  Sube una imagen (PNG, JPG, etc.) para el croquis de las cajas. Max 2MB.
+                </Form.Text>
+              </Form.Group>
+              {mapImageUrl && (
+                <div className="d-flex flex-column align-items-center mt-3">
+                  <img src={mapImageUrl} alt="Croquis actual" className="img-thumbnail mb-2" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} />
+                  <Button variant="outline-danger btn-sm" onClick={handleRemoveMapImage}>
+                    Eliminar Croquis Actual
+                  </Button>
+                </div>
+              )}
+            </Accordion.Body>
+          </Accordion.Item>
+
           <div className="d-grid gap-2 mt-3">
             <Button
               variant="outline-success"
-              onClick={exportarCSV} // Ya no se pasa 'turnosPorDia' como argumento
+              onClick={exportarCSV}
             >
               Descargar CSV 📄
             </Button>

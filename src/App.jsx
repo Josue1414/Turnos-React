@@ -5,6 +5,7 @@ import AdminPanel from "./components/AdminPanel";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import ParticipantesPanel from "./components/ParticipantesPanel";
+import MapViewer from "./components/MapViewer";
 
 const dias = ["viernes", "sábado", "domingo"];
 const API_URL =
@@ -20,14 +21,15 @@ function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [mostrarPanel, setMostrarPanel] = useState(false);
   const [participantes, setParticipantes] = useState([]); // Este estado parece no usarse directamente, pero lo dejo
+  const [showMapModal, setShowMapModal] = useState(false);
 
-  // Estado para personas (ya lo tienes bien, lo incluyo para contexto)
+  // Estado para personas
   const [personas, setPersonas] = useState(() => {
     const data = localStorage.getItem("personas");
     return data ? JSON.parse(data) : [];
   });
 
-  // MODIFICACIÓN CLAVE 1: Inicializar turnosPorDia desde localStorage
+  //Inicializar turnosPorDia desde localStorage
   const [turnosPorDia, setTurnosPorDia] = useState(() => {
     const savedTurnos = localStorage.getItem("turnosPorDia");
     if (savedTurnos) {
@@ -40,23 +42,32 @@ function App() {
         { id: 2, hora: "11:45 AM - 12:50 PM" },
         { id: 3, hora: "12:50 PM - 1:50 PM" },
         { id: 4, hora: "4:20 PM - 5:30 PM" },
+        // *** NUEVOS HORARIOS PARA VIERNES ***
+        { id: 5, hora: "Permanente 9:40 AM - 11:45 AM" },
+        { id: 6, hora: "Permanente 1:50 PM - 4:20 PM" },
       ],
       sábado: [
         { id: 1, hora: "8:30 AM - 9:40 AM" },
         { id: 2, hora: "11:45 AM - 12:50 PM" },
         { id: 3, hora: "12:50 PM - 1:50 PM" },
         { id: 4, hora: "4:10 PM - 5:20 PM" },
+        // *** NUEVOS HORARIOS PARA SÁBADO ***
+        { id: 5, hora: "Permanente 9:40 AM - 11:45 AM" },
+        { id: 6, hora: "Permanente 1:50 PM - 4:10 PM" },
       ],
       domingo: [
         { id: 1, hora: "8:30 AM - 9:40 AM" },
         { id: 2, hora: "11:45 AM - 12:50 PM" },
         { id: 3, hora: "12:50 PM - 1:50 PM" },
         { id: 4, hora: "3:15 PM - 4:30 PM" },
+        // *** NUEVOS HORARIOS PARA DOMINGO ***
+        { id: 5, hora: "Permanente 9:40 AM - 11:45 AM" },
+        { id: 6, hora: "Permanente 1:50 PM - 3:15 PM" },
       ],
     };
   });
 
-  // MODIFICACIÓN CLAVE 2: Inicializar cajasPorDia desde localStorage
+  //Inicializar cajasPorDia desde localStorage
   const [cajasPorDia, setCajasPorDia] = useState(() => {
     const savedCajas = localStorage.getItem("cajasPorDia");
     if (savedCajas) {
@@ -70,12 +81,21 @@ function App() {
     };
   });
 
-  // useEffect para guardar 'personas' (ya lo tenías)
+  const [mapImageUrl, setMapImageUrl] = useState(() => {
+    const savedMapUrl = localStorage.getItem("mapImageUrl");
+    return savedMapUrl || null;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("mapImageUrl", mapImageUrl || "");
+  }, [mapImageUrl]);
+
+  // useEffect para guardar 'personas'
   useEffect(() => {
     localStorage.setItem("personas", JSON.stringify(personas));
   }, [personas]);
 
-  // useEffect para cargar 'asignaciones' (ya lo tenías, pero el useEffect de guardar estaba separado)
+  // useEffect para cargar 'asignaciones'
   useEffect(() => {
     const guardado = localStorage.getItem("asignaciones");
     if (guardado) setAsignaciones(JSON.parse(guardado));
@@ -86,12 +106,10 @@ function App() {
     localStorage.setItem("asignaciones", JSON.stringify(asignaciones));
   }, [asignaciones]);
 
-  // MODIFICACIÓN CLAVE 3: useEffect para guardar 'turnosPorDia'
   useEffect(() => {
     localStorage.setItem("turnosPorDia", JSON.stringify(turnosPorDia));
   }, [turnosPorDia]);
 
-  // MODIFICACIÓN CLAVE 4: useEffect para guardar 'cajasPorDia'
   useEffect(() => {
     localStorage.setItem("cajasPorDia", JSON.stringify(cajasPorDia));
   }, [cajasPorDia]);
@@ -232,6 +250,13 @@ function App() {
           </button>
 
           <button
+            className="btn btn-outline-info"
+            onClick={() => setShowMapModal(!showMapModal)} // Alterna el estado
+          >
+            🗺️ {showMapModal ? "Ocultar Croquis" : "Ver Croquis"}
+          </button>
+
+          <button
             className="btn btn-outline-dark"
             onClick={() => setShowAdmin(true)}
           >
@@ -253,7 +278,17 @@ function App() {
           turnosPorDia={turnosPorDia} // Pasamos todo el objeto turnosPorDia
           asignaciones={asignaciones}
           setSelectedDay={setSelectedDay}
+          mapImageUrl={mapImageUrl}
+          setMapImageUrl={setMapImageUrl}
         />
+
+        {/* Puedes decidir si lo muestras siempre o solo al hacer clic en un botón */}
+        {/* Solo se renderiza si showMapModal es true */}
+        {showMapModal && (
+          <div className="mb-4">
+            <MapViewer imageUrl={mapImageUrl} show={showMapModal} onClose={() => setShowMapModal(false)} />
+          </div>
+        )}
 
         <div className="d-flex justify-content-center mb-4 flex-wrap">
           {dias.map((dia) => (
