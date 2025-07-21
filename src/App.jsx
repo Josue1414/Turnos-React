@@ -19,52 +19,82 @@ function App() {
   const [mostrarDisponibles, setMostrarDisponibles] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [mostrarPanel, setMostrarPanel] = useState(false);
-  const [participantes, setParticipantes] = useState([]);
+  const [participantes, setParticipantes] = useState([]); // Este estado parece no usarse directamente, pero lo dejo
 
+  // Estado para personas (ya lo tienes bien, lo incluyo para contexto)
   const [personas, setPersonas] = useState(() => {
     const data = localStorage.getItem("personas");
     return data ? JSON.parse(data) : [];
   });
 
-  const [turnosPorDia, setTurnosPorDia] = useState({
-    viernes: [
-      { id: 1, hora: "8:30 AM - 9:40 AM" },
-      { id: 2, hora: "11:45 AM - 12:50 PM" },
-      { id: 3, hora: "12:50 PM - 1:50 PM" },
-      { id: 4, hora: "4:20 PM - 5:30 PM" },
-    ],
-    sábado: [
-      { id: 1, hora: "8:30 AM - 9:40 AM" },
-      { id: 2, hora: "11:45 AM - 12:50 PM" },
-      { id: 3, hora: "12:50 PM - 1:50 PM" },
-      { id: 4, hora: "4:10 PM - 5:20 PM" },
-    ],
-    domingo: [
-      { id: 1, hora: "8:30 AM - 9:40 AM" },
-      { id: 2, hora: "11:45 AM - 12:50 PM" },
-      { id: 3, hora: "12:50 PM - 1:50 PM" },
-      { id: 4, hora: "3:15 PM - 4:30 PM" },
-    ],
+  // MODIFICACIÓN CLAVE 1: Inicializar turnosPorDia desde localStorage
+  const [turnosPorDia, setTurnosPorDia] = useState(() => {
+    const savedTurnos = localStorage.getItem("turnosPorDia");
+    if (savedTurnos) {
+      return JSON.parse(savedTurnos);
+    }
+    // Si no hay datos guardados, usa los valores por defecto
+    return {
+      viernes: [
+        { id: 1, hora: "8:30 AM - 9:40 AM" },
+        { id: 2, hora: "11:45 AM - 12:50 PM" },
+        { id: 3, hora: "12:50 PM - 1:50 PM" },
+        { id: 4, hora: "4:20 PM - 5:30 PM" },
+      ],
+      sábado: [
+        { id: 1, hora: "8:30 AM - 9:40 AM" },
+        { id: 2, hora: "11:45 AM - 12:50 PM" },
+        { id: 3, hora: "12:50 PM - 1:50 PM" },
+        { id: 4, hora: "4:10 PM - 5:20 PM" },
+      ],
+      domingo: [
+        { id: 1, hora: "8:30 AM - 9:40 AM" },
+        { id: 2, hora: "11:45 AM - 12:50 PM" },
+        { id: 3, hora: "12:50 PM - 1:50 PM" },
+        { id: 4, hora: "3:15 PM - 4:30 PM" },
+      ],
+    };
   });
 
-  const [cajasPorDia, setCajasPorDia] = useState({
-    viernes: ["Caja 1", "Caja 2", "Caja 3"],
-    sábado: ["Caja 1", "Caja 2", "Caja 3"],
-    domingo: ["Caja 1", "Caja 2", "Caja 3"],
+  // MODIFICACIÓN CLAVE 2: Inicializar cajasPorDia desde localStorage
+  const [cajasPorDia, setCajasPorDia] = useState(() => {
+    const savedCajas = localStorage.getItem("cajasPorDia");
+    if (savedCajas) {
+      return JSON.parse(savedCajas);
+    }
+    // Si no hay datos guardados, usa los valores por defecto
+    return {
+      viernes: ["Caja 1", "Caja 2", "Caja 3"],
+      sábado: ["Caja 1", "Caja 2", "Caja 3"],
+      domingo: ["Caja 1", "Caja 2", "Caja 3"],
+    };
   });
 
+  // useEffect para guardar 'personas' (ya lo tenías)
   useEffect(() => {
     localStorage.setItem("personas", JSON.stringify(personas));
   }, [personas]);
 
+  // useEffect para cargar 'asignaciones' (ya lo tenías, pero el useEffect de guardar estaba separado)
   useEffect(() => {
     const guardado = localStorage.getItem("asignaciones");
     if (guardado) setAsignaciones(JSON.parse(guardado));
   }, []);
 
+  // useEffect para guardar 'asignaciones' (ya lo tenías)
   useEffect(() => {
     localStorage.setItem("asignaciones", JSON.stringify(asignaciones));
   }, [asignaciones]);
+
+  // MODIFICACIÓN CLAVE 3: useEffect para guardar 'turnosPorDia'
+  useEffect(() => {
+    localStorage.setItem("turnosPorDia", JSON.stringify(turnosPorDia));
+  }, [turnosPorDia]);
+
+  // MODIFICACIÓN CLAVE 4: useEffect para guardar 'cajasPorDia'
+  useEffect(() => {
+    localStorage.setItem("cajasPorDia", JSON.stringify(cajasPorDia));
+  }, [cajasPorDia]);
 
   const mostrarAlerta = (mensaje, tipo = "danger") => {
     setAlerta({ mensaje, tipo });
@@ -164,11 +194,14 @@ function App() {
 
   const editarAsignacion = (datos) => setModoEdicion(datos);
 
+  // Estas líneas ahora obtienen los valores de los estados persistidos
   const turnos = turnosPorDia[selectedDay];
   const cajas = cajasPorDia[selectedDay];
   const asignacionesDia = asignaciones[selectedDay] || {};
 
-  const setCajas = (nuevasCajas) => {
+  // La función setCajas aquí es un envoltorio que actualiza cajasPorDia
+  // para el día seleccionado, y gracias al useEffect, esto se persistirá.
+  const setCajasParaDiaSeleccionado = (nuevasCajas) => {
     setCajasPorDia((prev) => ({
       ...prev,
       [selectedDay]: nuevasCajas,
@@ -209,17 +242,15 @@ function App() {
         <AdminPanel
           show={showAdmin}
           onClose={() => setShowAdmin(false)}
-          cajas={cajasPorDia[selectedDay]}
-          setCajas={(nuevasCajas) => {
-            setCajasPorDia((prev) => ({
-              ...prev,
-              [selectedDay]: nuevasCajas,
-            }));
-          }}
-          horarios={turnosPorDia[selectedDay]}
+          // Ahora pasamos el array de cajas del día seleccionado
+          cajas={cajas}
+          // Y el setter que actualiza solo las cajas del día seleccionado
+          setCajas={setCajasParaDiaSeleccionado}
+          // Pasamos los turnos del día seleccionado
+          horarios={turnos}
           selectedDay={selectedDay}
-          setTurnosPorDia={setTurnosPorDia}
-          turnosPorDia={turnosPorDia}
+          setTurnosPorDia={setTurnosPorDia} // Este setter se encarga de todo el objeto turnosPorDia
+          turnosPorDia={turnosPorDia} // Pasamos todo el objeto turnosPorDia
           asignaciones={asignaciones}
           setSelectedDay={setSelectedDay}
         />
@@ -357,4 +388,3 @@ function App() {
 }
 
 export default App;
-///// --- IGNORE ---
