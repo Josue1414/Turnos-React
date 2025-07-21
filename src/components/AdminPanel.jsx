@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Offcanvas, Button, Form, Accordion, ListGroup, ButtonGroup } from "react-bootstrap";
+import * as XLSX from 'xlsx';
 
 const dias = ["viernes", "sábado", "domingo"];
 
@@ -35,12 +36,12 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
     // Si necesitas verificar asignaciones antes de eliminar una caja,
     // tendrías que pasar 'asignaciones' a esta función o buscar aquí.
     const isCajaAsignada = Object.values(asignaciones[selectedDay] || {}).some(turnoObj =>
-        Object.keys(turnoObj).includes(nombre)
+      Object.keys(turnoObj).includes(nombre)
     );
 
     if (isCajaAsignada) {
-        mostrarAlerta(`No se puede eliminar "${nombre}" porque tiene asignaciones activas.`);
-        return;
+      mostrarAlerta(`No se puede eliminar "${nombre}" porque tiene asignaciones activas.`);
+      return;
     }
 
     setCajas(cajas.filter((c) => c !== nombre));
@@ -108,6 +109,32 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
     document.body.removeChild(link);
   };
 
+  const exportarExcel = () => {
+    const data = [];
+    data.push(["Día", "Turno", "Hora", "Caja", "Persona"]); // Encabezados
+
+    Object.entries(turnosPorDia).forEach(([dia, turnos]) => {
+      const asignacionesDia = asignaciones[dia] || {};
+      turnos.forEach((turno) => {
+        const turnoId = `T${turno.id}`;
+        const asignacionTurno = asignacionesDia[turnoId] || {};
+        // Si no hay asignaciones para este turno, aún lo incluimos para mostrar el horario
+        if (Object.keys(asignacionTurno).length === 0) {
+          data.push([dia, turnoId, turno.hora, "", ""]); // Fila vacía para turno sin asignación
+        } else {
+          Object.entries(asignacionTurno).forEach(([caja, persona]) => {
+            data.push([dia, turnoId, turno.hora, caja, persona]);
+          });
+        }
+      });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Turnos Asignados");
+    XLSX.writeFile(wb, "turnos.xlsx");
+  };
+
   return (
     <Offcanvas show={show} onHide={onClose} placement="end">
       <Offcanvas.Header closeButton>
@@ -141,7 +168,7 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
                   placeholder="Nueva caja"
                   value={nuevaCaja}
                   onChange={(e) => setNuevaCaja(e.target.value)}
-                  // Ya no necesitas onKeyPress aquí
+                // Ya no necesitas onKeyPress aquí
                 />
                 <Button variant="primary ms-2" type="submit"> {/* AÑADE type="submit" */}
                   Agregar
@@ -240,13 +267,20 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
             </Accordion.Body>
           </Accordion.Item>
 
-          <Button
-            variant="outline-success"
-            className="mb-3"
-            onClick={() => exportarCSV(turnosPorDia)}
-          >
-            Descargar CSV del día
-          </Button>
+          <div className="d-grid gap-2 mt-3">
+            <Button
+              variant="outline-success"
+              onClick={exportarCSV} // Ya no se pasa 'turnosPorDia' como argumento
+            >
+              Descargar CSV 📄
+            </Button>
+            <Button
+              variant="outline-info"
+              onClick={exportarExcel}
+            >
+              Descargar Excel 📊
+            </Button>
+          </div>
         </Accordion>
 
         {alerta && (
