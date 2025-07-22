@@ -342,3 +342,5 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
 };
 
 export default ParticipantesPanel;
+
+///////

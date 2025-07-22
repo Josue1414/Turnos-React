@@ -1,11 +1,34 @@
 import React, { useState } from "react";
-import { Offcanvas, Button, Form, Accordion, ListGroup, ButtonGroup } from "react-bootstrap";
-import * as XLSX from 'xlsx';
+import {
+  Offcanvas,
+  Button,
+  Form,
+  Accordion,
+  ListGroup,
+  ButtonGroup,
+} from "react-bootstrap";
+import * as XLSX from "xlsx";
 
 const dias = ["viernes", "sábado", "domingo"];
 
-const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPorDia, selectedDay, setSelectedDay, asignaciones, mapImageUrl,
-  setMapImageUrl, }) => {
+const AdminPanel = ({
+  show,
+  onClose,
+  cajas,
+  setCajas,
+  horarios,
+  selectedDay,
+  setTurnosPorDia,
+  turnosPorDia,
+  asignaciones, // Esta prop no se usa directamente en este snippet, pero se mantiene si se usa para Excel/PDF
+  setSelectedDay,
+  mapImageUrl,
+  setMapImageUrl,
+  currentImageIsDefault,
+  onResetMapToDefault,
+  onDownloadPng, // <-- NUEVA PROP
+  onDownloadPersonListPng, // <-- NUEVA PROP
+  }) => {
   const [nuevaCaja, setNuevaCaja] = useState("");
   const [nuevoTurno, setNuevoTurno] = useState("");
   const [alerta, setAlerta] = useState(null);
@@ -19,7 +42,8 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
   const manejarAgregarCaja = (e) => {
     e.preventDefault(); // <--- ESTO ES CLAVE: Previene la recarga de la página
 
-    if (nuevaCaja.trim() && !cajas.includes(nuevaCaja.trim())) { // Asegúrate de usar .trim() al verificar existencia también
+    if (nuevaCaja.trim() && !cajas.includes(nuevaCaja.trim())) {
+      // Asegúrate de usar .trim() al verificar existencia también
       setCajas([...cajas, nuevaCaja.trim()]);
       setNuevaCaja("");
       // Opcional: mostrar una alerta de éxito
@@ -36,18 +60,19 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
     // Por ahora, solo elimina si no está asignada.
     // Si necesitas verificar asignaciones antes de eliminar una caja,
     // tendrías que pasar 'asignaciones' a esta función o buscar aquí.
-    const isCajaAsignada = Object.values(asignaciones[selectedDay] || {}).some(turnoObj =>
-      Object.keys(turnoObj).includes(nombre)
+    const isCajaAsignada = Object.values(asignaciones[selectedDay] || {}).some(
+      (turnoObj) => Object.keys(turnoObj).includes(nombre)
     );
 
     if (isCajaAsignada) {
-      mostrarAlerta(`No se puede eliminar "${nombre}" porque tiene asignaciones activas.`);
+      mostrarAlerta(
+        `No se puede eliminar "${nombre}" porque tiene asignaciones activas.`
+      );
       return;
     }
 
     setCajas(cajas.filter((c) => c !== nombre));
   };
-
 
   // Función ya existente para manejar el envío del formulario de horarios (al presionar Enter)
   const manejarAgregarHorario = (e) => {
@@ -139,8 +164,12 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
   const handleMapImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // Limite de 2MB
-        mostrarAlerta("La imagen es demasiado grande. Por favor, sube una imagen de menos de 2MB.", "danger");
+      if (file.size > 2 * 1024 * 1024) {
+        // Limite de 2MB
+        mostrarAlerta(
+          "La imagen es demasiado grande. Por favor, sube una imagen de menos de 2MB.",
+          "danger"
+        );
         return;
       }
 
@@ -150,7 +179,10 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
         mostrarAlerta("✨ Imagen del croquis cargada con éxito.", "success");
       };
       reader.onerror = () => {
-        mostrarAlerta("❌ Error al leer la imagen. Inténtalo de nuevo.", "danger");
+        mostrarAlerta(
+          "❌ Error al leer la imagen. Inténtalo de nuevo.",
+          "danger"
+        );
       };
       reader.readAsDataURL(file); // Convierte la imagen a Base64
     }
@@ -200,9 +232,15 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
               </Form>
               <ListGroup>
                 {cajas.map((caja, index) => (
-                  <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
+                  <ListGroup.Item
+                    key={index}
+                    className="d-flex justify-content-between align-items-center"
+                  >
                     {caja}
-                    <Button variant="outline-danger btn-sm" onClick={() => eliminarCaja(caja)}>
+                    <Button
+                      variant="outline-danger btn-sm"
+                      onClick={() => eliminarCaja(caja)}
+                    >
                       ✕
                     </Button>
                   </ListGroup.Item>
@@ -222,17 +260,17 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
                   value={nuevoTurno}
                   onChange={(e) => setNuevoTurno(e.target.value)}
                 />
-                <Button
-                  variant="primary ms-2"
-                  type="submit"
-                >
+                <Button variant="primary ms-2" type="submit">
                   Agregar
                 </Button>
               </Form>
 
               <ListGroup>
                 {(turnosPorDia[selectedDay] || []).map((turno) => (
-                  <ListGroup.Item key={turno.id} className="d-flex align-items-center justify-content-between">
+                  <ListGroup.Item
+                    key={turno.id}
+                    className="d-flex align-items-center justify-content-between"
+                  >
                     <Form.Control
                       type="text"
                       value={turno.hora}
@@ -247,11 +285,15 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
                         }
 
                         const yaExiste = turnosActuales.some(
-                          (t) => t.id !== turno.id && t.hora.toLowerCase() === nuevaHora.toLowerCase()
+                          (t) =>
+                            t.id !== turno.id &&
+                            t.hora.toLowerCase() === nuevaHora.toLowerCase()
                         );
 
                         if (yaExiste) {
-                          mostrarAlerta("🚫 Ese horario ya existe en este día.");
+                          mostrarAlerta(
+                            "🚫 Ese horario ya existe en este día."
+                          );
                           return;
                         }
 
@@ -270,13 +312,17 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
                       onClick={() => {
                         const turnosActuales = turnosPorDia[selectedDay];
                         if (turnosActuales.length <= 1) {
-                          mostrarAlerta("🚫 No puedes eliminar el único horario.");
+                          mostrarAlerta(
+                            "🚫 No puedes eliminar el único horario."
+                          );
                           return;
                         }
 
                         const actualizados = {
                           ...turnosPorDia,
-                          [selectedDay]: turnosActuales.filter((t) => t.id !== turno.id),
+                          [selectedDay]: turnosActuales.filter(
+                            (t) => t.id !== turno.id
+                          ),
                         };
 
                         setTurnosPorDia(actualizados);
@@ -301,13 +347,26 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
                   onChange={handleMapImageUpload}
                 />
                 <Form.Text className="text-muted">
-                  Sube una imagen (PNG, JPG, etc.) para el croquis de las cajas. Max 2MB.
+                  Sube una imagen (PNG, JPG, etc.) para el croquis de las cajas.
+                  Max 2MB.
                 </Form.Text>
               </Form.Group>
               {mapImageUrl && (
                 <div className="d-flex flex-column align-items-center mt-3">
-                  <img src={mapImageUrl} alt="Croquis actual" className="img-thumbnail mb-2" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} />
-                  <Button variant="outline-danger btn-sm" onClick={handleRemoveMapImage}>
+                  <img
+                    src={mapImageUrl}
+                    alt="Croquis actual"
+                    className="img-thumbnail mb-2"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "200px",
+                      objectFit: "contain",
+                    }}
+                  />
+                  <Button
+                    variant="outline-danger btn-sm"
+                    onClick={handleRemoveMapImage}
+                  >
                     Eliminar Croquis Actual
                   </Button>
                 </div>
@@ -316,23 +375,33 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
           </Accordion.Item>
 
           <div className="d-grid gap-2 mt-3">
-            <Button
-              variant="outline-success"
-              onClick={exportarCSV}
-            >
+            <Button variant="outline-success" onClick={exportarCSV}>
               Descargar CSV 📄
             </Button>
-            <Button
-              variant="outline-info"
-              onClick={exportarExcel}
-            >
+            <Button variant="outline-info" onClick={exportarExcel}>
               Descargar Excel 📊
             </Button>
+            {/* <Button
+            variant="outline-info"
+            onClick={onDownloadPng} // <-- LLAMADA A LA FUNCIÓN DE DESCARGA PNG DE LA TABLA
+          >
+            Descargar Listado PNG (Vista de Turnos)
+          </Button> */}
+          <Button
+            variant="outline-secondary" // <-- NUEVO BOTÓN
+            onClick={onDownloadPersonListPng} // <-- LLAMADA A LA FUNCIÓN DE DESCARGA PNG POR PERSONA
+          >
+            Descargar Listado PNG 📸
+          </Button>
           </div>
         </Accordion>
 
         {alerta && (
-          <div className={`alert alert-${alerta.variante} position-fixed bottom-0 end-0 m-3 shadow`} role="alert" style={{ zIndex: 9999 }}>
+          <div
+            className={`alert alert-${alerta.variante} position-fixed bottom-0 end-0 m-3 shadow`}
+            role="alert"
+            style={{ zIndex: 9999 }}
+          >
             {alerta.mensaje}
           </div>
         )}
@@ -342,3 +411,5 @@ const AdminPanel = ({ show, onClose, cajas, setCajas, turnosPorDia, setTurnosPor
 };
 
 export default AdminPanel;
+
+////
