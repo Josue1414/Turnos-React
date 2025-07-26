@@ -166,9 +166,12 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
   };
 
   const participantesConEstado = useMemo(() => {
-    const participantesFiltrados = personas.filter((persona) =>
-      persona.toLowerCase().includes(filtro.toLowerCase())
-    );
+    // Filtra y ordena alfabéticamente
+    const participantesFiltrados = personas
+      .filter((persona) =>
+        persona.toLowerCase().includes(filtro.toLowerCase())
+      )
+      .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 
     return participantesFiltrados.map((persona) => ({
       nombre: persona,
@@ -179,7 +182,12 @@ const ParticipantesPanel = ({ show, onClose, personas, setPersonas, asignaciones
   return (
     <Offcanvas show={show} onHide={onClose} placement="start">
       <Offcanvas.Header closeButton>
-        <Offcanvas.Title>Participantes</Offcanvas.Title>
+        <Offcanvas.Title>
+          Participantes{" "}
+          <span className="badge bg-info ms-2">
+            Total: {personas.length}
+          </span>
+        </Offcanvas.Title>
       </Offcanvas.Header>
       <Offcanvas.Body>
         <Form className="mb-3">

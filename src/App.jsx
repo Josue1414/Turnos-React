@@ -305,7 +305,9 @@ function App() {
       });
     });
 
-    const personasOrdenadas = Array.from(personasConAsignaciones).sort();
+    const personasOrdenadas = Array.from(personasConAsignaciones).sort((a, b) =>
+      a.localeCompare(b, 'es', { sensitivity: 'base' })
+    );
 
     if (personasOrdenadas.length === 0) {
       contentHtml += `<p style="text-align: center; color: gray; margin-top: 30px;">No hay personas con asignaciones actualmente.</p>`;
